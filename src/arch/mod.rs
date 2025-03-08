@@ -12,6 +12,7 @@
 /// - A `Patcher`, modifies a target in-memory.
 /// - A `Trampoline`, generates a callable address to the target.
 pub use self::detour::Detour;
+pub use self::mid_func_hook::MidFuncHook;
 
 use cfg_if::cfg_if;
 
@@ -20,7 +21,7 @@ use cfg_if::cfg_if;
 cfg_if! {
     if #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] {
         mod x86;
-        use self::x86::{Patcher, Trampoline, meta};
+        use self::x86::{Patcher, Trampoline, meta, Hook};
     } else {
         // TODO: Implement ARM/AARCH64/MIPS support!
     }
@@ -28,6 +29,7 @@ cfg_if! {
 
 mod detour;
 mod memory;
+mod mid_func_hook;
 
 /// Returns true if the displacement is within a certain range.
 pub fn is_within_range(displacement: isize) -> bool {

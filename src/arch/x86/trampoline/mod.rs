@@ -2,11 +2,12 @@ use self::disasm::*;
 use crate::arch::x86::thunk;
 use crate::error::{Error, Result};
 use crate::pic;
+use crate::util::BITNESS;
 use iced_x86::{Decoder, DecoderOptions, Instruction, OpKind};
 use std::ptr::slice_from_raw_parts;
 use std::{mem, slice};
 
-mod disasm;
+pub mod disasm;
 
 /// A trampoline generator (x86/x64).
 pub struct Trampoline {
@@ -75,12 +76,7 @@ impl Builder {
     // to be given a 15 byte slice to handle any valid x64 instruction
     let target: *const u8 = self.target.cast();
     let slice = unsafe { slice::from_raw_parts(std::hint::black_box(target), self.margin + 15) };
-    let decoder = Decoder::with_ip(
-      (mem::size_of::<usize>() * 8) as u32,
-      slice,
-      self.target as u64,
-      DecoderOptions::NONE,
-    );
+    let decoder = Decoder::with_ip(BITNESS, slice, self.target as u64, DecoderOptions::NONE);
     for instruction in decoder {
       if instruction.is_invalid() {
         break;
@@ -166,20 +162,21 @@ impl Builder {
     // These need to be captured by the closure
     let instruction_address = instruction.ip() as isize;
     let instruction_bytes = instruction_bytes.to_vec();
-    let immediate_size = instruction.op_kinds().find_map(|kind| {
-        match kind {
-            OpKind::Immediate8 => Some(1),
-            OpKind::Immediate8_2nd => Some(1),
-            OpKind::Immediate16 => Some(2),
-            OpKind::Immediate32 => Some(4),
-            OpKind::Immediate64 => Some(8),
-            OpKind::Immediate8to16 => Some(1),
-            OpKind::Immediate8to32 => Some(1),
-            OpKind::Immediate8to64 => Some(1),
-            OpKind::Immediate32to64 => Some(4),
-            _ => None,
-        }
-    }).unwrap_or(0);
+    let immediate_size = instruction
+      .op_kinds()
+      .find_map(|kind| match kind {
+        OpKind::Immediate8 => Some(1),
+        OpKind::Immediate8_2nd => Some(1),
+        OpKind::Immediate16 => Some(2),
+        OpKind::Immediate32 => Some(4),
+        OpKind::Immediate64 => Some(8),
+        OpKind::Immediate8to16 => Some(1),
+        OpKind::Immediate8to32 => Some(1),
+        OpKind::Immediate8to64 => Some(1),
+        OpKind::Immediate32to64 => Some(4),
+        _ => None,
+      })
+      .unwrap_or(0);
 
     Ok(Box::new(pic::UnsafeThunk::new(
       move |offset| {
@@ -198,7 +195,7 @@ impl Builder {
 
         // Write the adjusted displacement offset to the operand
         let as_bytes: [u8; 4] = (adjusted_displacement as u32).to_ne_bytes();
-        bytes[index..index+as_bytes.len()].copy_from_slice(&as_bytes);
+        bytes[index..index + as_bytes.len()].copy_from_slice(&as_bytes);
         bytes
       },
       instruction.len(),
