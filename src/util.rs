@@ -8,3 +8,5 @@ pub fn is_executable_address(address: *const ()) -> Result<bool> {
       .contains(region::Protection::EXECUTE),
   )
 }
+
+pub const BITNESS: u32 = (std::mem::size_of::<usize>() * 8) as u32;
