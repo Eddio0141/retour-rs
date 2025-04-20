@@ -1,5 +1,5 @@
 use crate::pic::{FixedThunk, Thunkable};
-use generic_array::{typenum, GenericArray};
+use generic_array::{GenericArray, typenum};
 use std::mem;
 
 use super::Register;
@@ -115,4 +115,18 @@ pub fn and_reg_i32(register: Register, imm: i32) -> Box<dyn Thunkable> {
   let mut bytes = vec![opcode, mod_r_m];
   bytes.extend_from_slice(&imm);
   Box::new(bytes)
+}
+
+pub fn push_all_regs() -> Box<dyn Thunkable> {
+  use iced_x86::code_asm::*;
+  let mut builder = CodeAssembler::new(32).unwrap();
+  builder.pusha().unwrap();
+  Box::new(builder.assemble(0x00).unwrap())
+}
+
+pub fn pop_all_regs() -> Box<dyn Thunkable> {
+  use iced_x86::code_asm::*;
+  let mut builder = CodeAssembler::new(32).unwrap();
+  builder.popa().unwrap();
+  Box::new(builder.assemble(0x00).unwrap())
 }
