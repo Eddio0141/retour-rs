@@ -2,7 +2,7 @@ use crate::pic::{FixedThunk, Thunkable};
 use generic_array::{typenum, GenericArray};
 use std::mem;
 
-#[repr(packed)]
+#[repr(C, packed)]
 pub struct JumpRel {
   opcode: u8,
   operand: u32,
@@ -39,7 +39,7 @@ pub fn jmp_rel32(destination: usize) -> Box<dyn Thunkable> {
   relative32(destination, true)
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 struct JccRel {
   opcode0: u8,
   opcode1: u8,
@@ -60,7 +60,7 @@ pub fn jcc_rel32(destination: usize, condition: u8) -> Box<dyn Thunkable> {
   }))
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 pub struct JumpShort {
   opcode: u8,
   operand: i8,

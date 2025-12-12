@@ -1,7 +1,7 @@
 use crate::pic::Thunkable;
 use std::mem;
 
-#[repr(packed)]
+#[repr(C, packed)]
 struct CallAbs {
   // call [rip+8]
   opcode0: u8,
@@ -28,7 +28,7 @@ pub fn call_abs(destination: usize) -> Box<dyn Thunkable> {
   Box::new(slice.to_vec())
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 struct JumpAbs {
   // jmp +6
   opcode0: u8,
@@ -50,7 +50,7 @@ pub fn jmp_abs(destination: usize) -> Box<dyn Thunkable> {
   Box::new(slice.to_vec())
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 struct JccAbs {
   // jxx + 16
   opcode: u8,
