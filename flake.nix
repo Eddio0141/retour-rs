@@ -1,9 +1,5 @@
 {
   inputs = {
-    fenix = {
-      url = "github:nix-community/fenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -25,20 +21,20 @@
       ];
       perSystem =
         {
-          inputs',
           system,
           pkgs,
           ...
         }:
         let
+          rust = pkgs.rust-bin.selectLatestNightlyWith (t: t.default);
+
+          # the correct rust-doc command is made, no need to modify this
           rust-doc = pkgs.writeShellApplication {
             name = "rust-doc";
             text = ''
-              xdg-open "${inputs'.fenix.packages.latest.rust-docs}/share/doc/rust/html/index.html"
+              xdg-open "${rust}/share/doc/rust/html/index.html"
             '';
           };
-
-          rust = pkgs.rust-bin.selectLatestNightlyWith (t: t.default);
         in
         {
           _module.args.pkgs = import nixpkgs {
