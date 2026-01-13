@@ -3,7 +3,7 @@ use std::{mem, slice};
 
 use iced_x86::{Decoder, DecoderOptions, FlowControl, Instruction, OpKind};
 
-use crate::{pic, util::BITNESS, Error, Result};
+use crate::{Error, Result, pic, util::BITNESS};
 
 use super::{
   thunk::{self, Register},
@@ -12,7 +12,9 @@ use super::{
 
 /// A mid-function hook.
 ///
-/// `hook` is not directly used as this isn't a detour, there needs to be preparation before calling `hook` since jumping to hook directly can be a disaster
+/// `hook` is not directly used as this isn't a detour, there needs to be
+/// preparation before calling `hook` since jumping to hook directly can be a
+/// disaster
 pub struct Hook {
   emitter: pic::CodeEmitter,
 }
@@ -39,7 +41,8 @@ impl Builder {
   ///
   /// # Safety
   ///
-  /// target..target+15 must be valid to read as u8 slice or behavior may be undefined
+  /// target..target+15 must be valid to read as u8 slice or behavior may be
+  /// undefined
   fn new(target: *const (), hook: *const (), original_first: bool) -> Self {
     Builder {
       target,
@@ -84,26 +87,34 @@ impl Builder {
       emitter.add_thunk(inst);
     }
 
-    // align sp
-    emitter.add_thunk(thunk::push_reg(Register::bp));
+    // save registers and align sp
     #[cfg(target_arch = "x86_64")]
-    emitter.add_thunk(thunk::x64::mov_reg_extended(Register::sp, Register::bp));
+    {
+      emitter.add_thunk(thunk::x64::push_all_regs());
+      emitter.add_thunk(thunk::x64::mov_reg_extended(Register::sp, Register::bp));
+      emitter.add_thunk(thunk::x64::and_reg_i32_extended(Register::sp, -16));
+    }
     #[cfg(target_arch = "x86")]
-    emitter.add_thunk(thunk::x86::mov_reg(Register::sp, Register::bp));
-    #[cfg(target_arch = "x86_64")]
-    emitter.add_thunk(thunk::x64::and_reg_i32_extended(Register::sp, -16));
-    #[cfg(target_arch = "x86")]
-    emitter.add_thunk(thunk::x86::and_reg_i32(Register::sp, -16));
+    {
+      emitter.add_thunk(thunk::x86::push_all_regs());
+      emitter.add_thunk(thunk::x86::mov_reg(Register::sp, Register::bp));
+      emitter.add_thunk(thunk::x86::and_reg_i32(Register::sp, -16));
+    }
 
     // actually call hook
     emitter.add_thunk(thunk::call(self.hook as usize));
 
     // restore sp
     #[cfg(target_arch = "x86_64")]
-    emitter.add_thunk(thunk::x64::mov_reg_extended(Register::bp, Register::sp));
+    {
+      emitter.add_thunk(thunk::x64::mov_reg_extended(Register::bp, Register::sp));
+      emitter.add_thunk(thunk::x64::pop_all_regs());
+    }
     #[cfg(target_arch = "x86")]
-    emitter.add_thunk(thunk::x86::mov_reg(Register::bp, Register::sp));
-    emitter.add_thunk(thunk::pop_reg(Register::bp));
+    {
+      emitter.add_thunk(thunk::x86::mov_reg(Register::bp, Register::sp));
+      emitter.add_thunk(thunk::x86::pop_all_regs());
+    }
 
     if !self.original_first {
       let inst = self.process_instruction(&inst, inst_bytes)?;
