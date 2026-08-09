@@ -45,6 +45,7 @@ thiscall-abi = ["nightly"]
 static-detour = ["nightly", "dep:static-detour"]
 28-args = []
 42-args = ["28-args"]
+c-variadic = ["nightly", "static-detour/c-variadic"]
 
 [[example]]
 name = "messageboxw_detour"
