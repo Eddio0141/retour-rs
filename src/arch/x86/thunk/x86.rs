@@ -1,3 +1,4 @@
+use super::Register;
 use crate::pic::{FixedThunk, Thunkable};
 use generic_array::{typenum, GenericArray};
 use std::mem;
@@ -90,4 +91,27 @@ fn calculate_displacement(source: usize, destination: usize, instruction_size: u
   assert!(crate::arch::is_within_range(displacement));
 
   displacement as u32
+}
+
+pub fn mov_reg(src: Register, dst: Register) -> Box<dyn Thunkable> {
+  let opcode = 0x8b;
+  let src = src as u8;
+  let dst = dst as u8;
+
+  let mode = 0b11 << 6;
+  let dst = dst << 3;
+  Box::new(vec![opcode, mode | dst | src])
+}
+
+pub fn and_reg_i32(register: Register, imm: i32) -> Box<dyn Thunkable> {
+  let opcode = 0x81;
+  let register = register as u8;
+  let m = 0b11 << 6;
+  let reg = 0b100 << 3;
+  let mod_r_m = m | reg | register;
+  let imm = imm.to_le_bytes();
+
+  let mut bytes = vec![opcode, mod_r_m];
+  bytes.extend_from_slice(&imm);
+  Box::new(bytes)
 }

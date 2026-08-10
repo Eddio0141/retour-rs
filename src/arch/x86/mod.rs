@@ -1,6 +1,8 @@
+pub use self::hook_arch::HookArch;
 pub use self::patcher::Patcher;
 pub use self::trampoline::Trampoline;
 
+mod hook_arch;
 pub mod meta;
 mod patcher;
 mod thunk;

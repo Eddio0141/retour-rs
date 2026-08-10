@@ -5,6 +5,8 @@ use std::mem;
 /// The furthest distance between a target and its detour (2 GiB).
 pub const DETOUR_RANGE: usize = 0x8000_0000;
 
+pub const MAX_INSTRUCTION_SIZE: usize = 15;
+
 /// Returns the preferred prolog size for the target.
 pub fn prolog_margin(_target: *const ()) -> usize {
   mem::size_of::<thunk::x86::JumpRel>()

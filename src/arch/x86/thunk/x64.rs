@@ -1,3 +1,4 @@
+use super::Register;
 use crate::pic::Thunkable;
 use std::mem;
 
@@ -75,4 +76,29 @@ pub fn jcc_abs(destination: usize, condition: u8) -> Box<dyn Thunkable> {
 
   let slice: [u8; 16] = unsafe { mem::transmute(code) };
   Box::new(slice.to_vec())
+}
+
+pub fn mov_reg_extended(src: Register, dst: Register) -> Box<dyn Thunkable> {
+  let rex = 0x48;
+  let opcode = 0x89;
+  let src = src as u8;
+  let dst = dst as u8;
+
+  let m = 0b11 << 6;
+  let src = src << 3;
+  Box::new(vec![rex, opcode, m | src | dst])
+}
+
+pub fn and_reg_i32_extended(register: Register, imm: i32) -> Box<dyn Thunkable> {
+  let rex = 0x48;
+  let opcode = 0x81;
+  let register = register as u8;
+  let m = 0b11 << 6;
+  let reg = 0b100 << 3;
+  let mod_r_m = m | reg | register;
+  let imm = imm.to_le_bytes();
+
+  let mut bytes = vec![rex, opcode, mod_r_m];
+  bytes.extend_from_slice(&imm);
+  Box::new(bytes)
 }
