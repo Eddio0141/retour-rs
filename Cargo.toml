@@ -27,6 +27,7 @@ slice-pool = {package = "slice-pool2", version = "0.4.3" }
 [dev-dependencies]
 matches = "0.1.10"
 ctor = "0.2.2"
+lazy_static = "1.5.0"
 
 [features]
 default = []

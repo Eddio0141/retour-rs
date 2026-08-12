@@ -1,5 +1,9 @@
+use lazy_static::lazy_static;
 use retour::Result;
-use std::mem;
+use std::{
+  mem,
+  sync::{Arc, Mutex},
+};
 
 type FnAdd = extern "C" fn(i32, i32) -> i32;
 
@@ -8,8 +12,15 @@ extern "C" fn sub_detour(x: i32, y: i32) -> i32 {
   unsafe { std::ptr::read_volatile(&x as *const i32) - y }
 }
 
+lazy_static! {
+  static ref HOOK_COUNTER: Arc<Mutex<usize>> = Arc::new(Mutex::new(0));
+}
+
 #[inline(never)]
-fn hook_callback() {}
+extern "C" fn hook_callback() {
+  let mut counter = HOOK_COUNTER.lock().unwrap();
+  *counter = counter.wrapping_add(1);
+}
 
 mod raw {
   use core::slice;
@@ -97,13 +108,18 @@ mod raw {
     };
 
     unsafe {
-      let hook = RawHook::new(count_addr, hook_callback as *const (), false).unwrap();
+      let hook = RawDetour::new(count_addr as *const (), hook_callback as *const ()).unwrap();
 
       hook.enable().unwrap();
 
       let counter_prev = COUNTER;
+      let hook_counter_prev = *HOOK_COUNTER.lock().unwrap();
       count();
       assert_eq!(COUNTER, counter_prev.wrapping_add(1));
+      assert_eq!(
+        *HOOK_COUNTER.lock().unwrap(),
+        hook_counter_prev.wrapping_add(1)
+      );
 
       hook.disable().unwrap();
     }
