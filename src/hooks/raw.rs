@@ -1,9 +1,9 @@
-use crate::arch::Hook;
+use crate::arch::Detour;
 
 use crate::error::Result;
 
 #[derive(Debug)]
-pub struct RawHook(Hook);
+pub struct RawHook(Detour);
 
 // TODO: stop all threads in target during patch?
 impl RawHook {
@@ -11,7 +11,7 @@ impl RawHook {
   ///
   /// The hook is disabled by default.
   pub unsafe fn new(target: usize, hook: *const ()) -> Result<Self> {
-    Hook::new(target, hook).map(RawHook)
+    Detour::new(target as *const (), hook, true).map(RawHook)
   }
 
   /// Enables the detour.

@@ -50,7 +50,7 @@ impl RawDetour {
   /// function might for example get inlined in which case it is impossible to
   /// hook at runtime.
   pub unsafe fn new(target: *const (), detour: *const ()) -> Result<Self> {
-    Detour::new(target, detour).map(RawDetour)
+    Detour::new(target, detour, false).map(RawDetour)
   }
 
   /// Enables the detour.

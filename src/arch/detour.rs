@@ -18,7 +18,7 @@ pub struct Detour {
 }
 
 impl Detour {
-  pub unsafe fn new(target: *const (), detour: *const ()) -> Result<Self> {
+  pub unsafe fn new(target: *const (), detour: *const (), hook: bool) -> Result<Self> {
     if target == detour {
       Err(Error::SameAddress)?;
     }
@@ -32,7 +32,7 @@ impl Detour {
 
     // Create a trampoline generator for the target function
     let margin = arch::meta::prolog_margin(target);
-    let trampoline = arch::Trampoline::new(target, margin)?;
+    let trampoline = arch::Trampoline::new(target, margin, hook)?;
 
     // A relay is used in case a normal branch cannot reach the destination
     let relay = if let Some(emitter) = arch::meta::relay_builder(target, detour)? {

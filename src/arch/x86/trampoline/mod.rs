@@ -3,7 +3,6 @@ use crate::arch::x86::thunk;
 use crate::error::{Error, Result};
 use crate::pic;
 use iced_x86::{Decoder, DecoderOptions, Instruction, OpKind};
-use std::ptr::slice_from_raw_parts;
 use std::{mem, slice};
 
 pub mod disasm;
@@ -16,8 +15,8 @@ pub struct Trampoline {
 
 impl Trampoline {
   /// Constructs a new trampoline for an address.
-  pub unsafe fn new(target: *const (), margin: usize) -> Result<Trampoline> {
-    Builder::new(target, margin).build()
+  pub unsafe fn new(target: *const (), margin: usize, hook: bool) -> Result<Trampoline> {
+    Builder::new(target, margin, hook).build()
   }
 
   /// Returns a reference to the trampoline's code emitter.

@@ -59,7 +59,7 @@ impl<T: Function> GenericDetour<T> {
     T: HookableWith<D>,
     D: Function,
   {
-    Detour::new(target.to_ptr(), detour.to_ptr()).map(|detour| GenericDetour {
+    Detour::new(target.to_ptr(), detour.to_ptr(), false).map(|detour| GenericDetour {
       phantom: PhantomData,
       detour,
     })

@@ -108,7 +108,7 @@ mod raw {
     };
 
     unsafe {
-      let hook = RawDetour::new(count_addr as *const (), hook_callback as *const ()).unwrap();
+      let hook = RawHook::new(count_addr, hook_callback as *const ()).unwrap();
 
       hook.enable().unwrap();
 
